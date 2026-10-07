@@ -8,7 +8,12 @@ import (
 )
 
 func main() {
-	st, _ := store.NewStore(context.Background(), "postgres://urlittle:urlittle@localhost:5432/urlittle", 100)
+	config, err := LoadConfig()
+	if err != nil {
+		panic(err)
+	}
+
+	st, _ := store.NewStore(context.Background(), config.Store.DBURL, config.Store.CacheSize)
 	defer st.Close()
 	h := NewHandler(st)
 
@@ -17,7 +22,7 @@ func main() {
 	mux.HandleFunc("POST /", h.Store)
 	mux.HandleFunc("GET /{id}", h.Retrieve)
 
-	err := http.ListenAndServe(":9808", mux)
+	err = http.ListenAndServe(":"+config.Port, mux)
 	if err != nil {
 		panic(err)
 	}

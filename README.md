@@ -1,6 +1,8 @@
 # TODO
 
 - [ ] Config load from env and .yaml
+  - [x] from environment
+  - [ ] from .yaml
 - [x] Db connection
 - [ ] Url redirect
 - [ ] Docker container
