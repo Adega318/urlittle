@@ -1,4 +1,4 @@
-module URLittle
+module github.com/Adega318/urlittle
 
 go 1.27.1
 
