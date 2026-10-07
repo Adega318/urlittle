@@ -1,0 +1,16 @@
+# Env
+.direnv
+.git
+.github
+.env*
+shell.nix
+*.md
+
+# Docker
+Dockerfile
+docker-compose.yml
+docker-compose_local.yml
+.dockerignore
+
+# Code
+migrate

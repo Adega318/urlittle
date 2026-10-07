@@ -5,7 +5,7 @@
   - [ ] from .yaml
 - [x] Db connection
 - [x] Url redirect
-- [ ] Docker container
+- [x] Docker container
 - [ ] Tests
 - [ ] improve error handling
 - [ ] move db img to is own docker with migrations
