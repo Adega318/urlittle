@@ -19,8 +19,8 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /", h.Store)
-	mux.HandleFunc("GET /{id}", h.Retrieve)
+	mux.HandleFunc("POST /{$}", h.Store)
+	mux.HandleFunc("/{id}", h.Redirect)
 
 	err = http.ListenAndServe(":"+config.Port, mux)
 	if err != nil {

@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"crypto/rand"
-	"encoding/base64"
 	"errors"
 
 	"github.com/Adega318/urlittle/internal"
@@ -16,6 +15,8 @@ type Store struct {
 	cache *lru.Cache[string, string]
 	db    *pgxpool.Pool
 }
+
+const URLIDSize = 6
 
 func NewStore(ctx context.Context, connString string, cacheSize int) (*Store, error) {
 	cache, err := lru.New[string, string](cacheSize)
@@ -39,12 +40,9 @@ func (s *Store) Close() {
 }
 
 func (s *Store) Add(ctx context.Context, value string) (string, error) {
-	id, err := generateID()
-	if err != nil {
-		return "", err
-	}
+	id := rand.Text()[:URLIDSize]
 
-	value, err = internal.NormalizeURL(value)
+	value, err := internal.NormalizeURL(value)
 	if err != nil {
 		return "", err
 	}
@@ -84,13 +82,4 @@ func (s *Store) Get(ctx context.Context, key string) (string, error) {
 	}
 
 	return value, nil
-}
-
-func generateID() (string, error) {
-	b := make([]byte, 6) // 48 bits
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-
-	return base64.RawURLEncoding.EncodeToString(b), nil
 }

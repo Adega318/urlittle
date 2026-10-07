@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 
@@ -29,10 +28,14 @@ func (h *Handler) Store(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "Stored on: %s", id)
+	url := "http://" + r.Host + "/" + id
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusCreated)
+	_, _ = w.Write([]byte(url))
 }
 
-func (h *Handler) Retrieve(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
 	val, err := h.st.Get(r.Context(), id)
@@ -41,5 +44,5 @@ func (h *Handler) Retrieve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "value: %s", val)
+	http.Redirect(w, r, val, http.StatusMovedPermanently)
 }

@@ -4,7 +4,7 @@
   - [x] from environment
   - [ ] from .yaml
 - [x] Db connection
-- [ ] Url redirect
+- [x] Url redirect
 - [ ] Docker container
 - [ ] Tests
 - [ ] improve error handling
