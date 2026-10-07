@@ -9,3 +9,4 @@
 - [ ] Tests
 - [ ] improve error handling
 - [ ] move db img to is own docker with migrations
+- [ ] removal of urls by ttl
