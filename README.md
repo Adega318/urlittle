@@ -1,7 +1,9 @@
 # TODO
 
 - [ ] Config load from env and .yaml
-- [ ] Db connection
+- [x] Db connection
 - [ ] Url redirect
 - [ ] Docker container
 - [ ] Tests
+- [ ] improve error handling
+- [ ] move db img to is own docker with migrations

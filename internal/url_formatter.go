@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func normalizeURL(raw string) (string, error) {
+func NormalizeURL(raw string) (string, error) {
 	u, err := url.ParseRequestURI(raw)
 	if err != nil {
 		return "", fmt.Errorf("invalid URL")

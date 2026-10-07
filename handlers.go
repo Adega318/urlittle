@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/Adega318/urlittle/store"
 )
 
 type Handler struct {
-	store Store
+	st store.Store
 }
 
-func NewHandler() *Handler {
-	return &Handler{*NewStore()}
+func NewHandler(st *store.Store) *Handler {
+	return &Handler{*st}
 }
 
 func (h *Handler) Store(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +23,7 @@ func (h *Handler) Store(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.store.Add(string(body))
+	id, err := h.st.Add(r.Context(), string(body))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -33,7 +35,7 @@ func (h *Handler) Store(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Retrieve(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	val, err := h.store.Get(id)
+	val, err := h.st.Get(r.Context(), id)
 	if err != nil {
 		http.NotFound(w, r)
 		return
