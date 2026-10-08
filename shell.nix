@@ -7,7 +7,7 @@ pkgs.mkShell {
     go_1_27
     gotools
     gcc
-    (pkgs.writeShellScriptBin "gor" "exec go run .")
+    (pkgs.writeShellScriptBin "gor" "exec go run ./cmd/urlittle")
     (writeShellScriptBin "up" ''
       case "$1" in
         dev)

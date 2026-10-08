@@ -49,11 +49,15 @@ func main() {
 		errCh <- srv.ListenAndServe()
 	}()
 
+	log.Printf("server listening on :%s", config.Port)
+
 	select {
 	case err := <-errCh:
 		log.Fatal(err)
 	case <-ctx.Done():
 	}
+
+	log.Printf("server stopping...")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
