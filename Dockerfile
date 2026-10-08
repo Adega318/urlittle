@@ -18,7 +18,8 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 FROM alpine:3.24
 
 RUN addgroup -S -g 65532 app \
-  && adduser -S -D -H -u 65532 -G app app
+  && adduser -S -D -H -u 65532 -G app app \
+  && apk add --no-cache wget
 
 COPY --from=builder /out/app /usr/local/bin/app
 
