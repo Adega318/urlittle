@@ -5,18 +5,24 @@ import (
 	"crypto/rand"
 	"errors"
 
-	"github.com/Adega318/urlittle/internal"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+var ErrNotFound = errors.New("not found")
 
 type Store struct {
 	cache *lru.Cache[string, string]
 	db    *pgxpool.Pool
 }
 
-const URLIDSize = 6
+const (
+	URLIDSize     = 6
+	maxIDAttempts = 3
+	uniqueCode    = "23505"
+)
 
 func NewStore(ctx context.Context, connString string, cacheSize int) (*Store, error) {
 	cache, err := lru.New[string, string](cacheSize)
@@ -40,26 +46,29 @@ func (s *Store) Close() {
 }
 
 func (s *Store) Add(ctx context.Context, value string) (string, error) {
-	id := rand.Text()[:URLIDSize]
+	for attempt := 0; attempt < maxIDAttempts; attempt++ {
+		id := rand.Text()[:URLIDSize]
 
-	value, err := internal.NormalizeURL(value)
-	if err != nil {
-		return "", err
+		_, err := s.db.Exec(
+			ctx,
+			"INSERT INTO urls (id, url) VALUES ($1, $2)",
+			id,
+			value,
+		)
+		if err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == uniqueCode {
+				continue
+			}
+			return "", err
+		}
+
+		s.cache.Add(id, value)
+
+		return id, nil
 	}
 
-	_, err = s.db.Exec(
-		ctx,
-		"INSERT INTO urls (id, url) VALUES ($1, $2)",
-		id,
-		value,
-	)
-	if err != nil {
-		return "", err
-	}
-
-	s.cache.Add(id, value)
-
-	return id, nil
+	return "", errors.New("could not generate a unique id")
 }
 
 func (s *Store) Get(ctx context.Context, key string) (string, error) {
@@ -72,7 +81,7 @@ func (s *Store) Get(ctx context.Context, key string) (string, error) {
 		).Scan(&value)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return "", errors.New("not found")
+				return "", ErrNotFound
 			}
 
 			return "", err

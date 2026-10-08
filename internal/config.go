@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"errors"
@@ -17,9 +17,14 @@ type StoreConfig struct {
 }
 
 func LoadConfig() (Config, error) {
-	cacheSize, err := strconv.Atoi(os.Getenv("CACHE_SIZE"))
+	cacheSizeRaw := os.Getenv("CACHE_SIZE")
+	if cacheSizeRaw == "" {
+		return Config{}, errors.New("no value found for CACHE_SIZE environment variable")
+	}
+
+	cacheSize, err := strconv.Atoi(cacheSizeRaw)
 	if err != nil {
-		return Config{}, err
+		return Config{}, errors.New("CACHE_SIZE must be an integer")
 	}
 
 	port := os.Getenv("PORT")

@@ -1,4 +1,4 @@
-package internal
+package normalize
 
 import (
 	"fmt"
@@ -6,7 +6,11 @@ import (
 	"strings"
 )
 
-func NormalizeURL(raw string) (string, error) {
+func URL(raw string) (string, error) {
+	if i := strings.IndexByte(raw, '#'); i >= 0 {
+		raw = raw[:i]
+	}
+
 	u, err := url.ParseRequestURI(raw)
 	if err != nil {
 		return "", fmt.Errorf("invalid URL")
@@ -31,8 +35,6 @@ func NormalizeURL(raw string) (string, error) {
 	if u.Path == "/" {
 		u.Path = ""
 	}
-
-	u.Fragment = ""
 
 	return u.String(), nil
 }
