@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"errors"
+	"time"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/jackc/pgx/v5"
@@ -14,18 +15,24 @@ import (
 var ErrNotFound = errors.New("not found")
 
 type Store struct {
-	cache *lru.Cache[string, string]
+	cache *lru.Cache[string, Entry]
 	db    *pgxpool.Pool
+}
+
+type Entry struct {
+	URL       string
+	ExpiresAt time.Time
 }
 
 const (
 	URLIDSize     = 6
 	maxIDAttempts = 3
+	ttl           = time.Minute * 10
 	uniqueCode    = "23505"
 )
 
 func NewStore(ctx context.Context, connString string, cacheSize int) (*Store, error) {
-	cache, err := lru.New[string, string](cacheSize)
+	cache, err := lru.New[string, Entry](cacheSize)
 	if err != nil {
 		return nil, err
 	}
@@ -46,14 +53,17 @@ func (s *Store) Close() {
 }
 
 func (s *Store) Add(ctx context.Context, value string) (string, error) {
+	explires := time.Now().Add(ttl)
+
 	for attempt := 0; attempt < maxIDAttempts; attempt++ {
 		id := rand.Text()[:URLIDSize]
 
 		_, err := s.db.Exec(
 			ctx,
-			"INSERT INTO urls (id, url) VALUES ($1, $2)",
+			"INSERT INTO urls (id, url, expires_at) VALUES ($1, $2, $3)",
 			id,
 			value,
+			explires,
 		)
 		if err != nil {
 			var pgErr *pgconn.PgError
@@ -63,7 +73,7 @@ func (s *Store) Add(ctx context.Context, value string) (string, error) {
 			return "", err
 		}
 
-		s.cache.Add(id, value)
+		s.cache.Add(id, Entry{value, explires})
 
 		return id, nil
 	}
@@ -73,12 +83,13 @@ func (s *Store) Add(ctx context.Context, value string) (string, error) {
 
 func (s *Store) Get(ctx context.Context, key string) (string, error) {
 	value, ok := s.cache.Get(key)
+
 	if !ok {
 		err := s.db.QueryRow(
 			ctx,
-			"SELECT url FROM urls WHERE id = $1",
+			"SELECT url, expires_at FROM urls WHERE id = $1",
 			key,
-		).Scan(&value)
+		).Scan(&value.URL, &value.ExpiresAt)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return "", ErrNotFound
@@ -90,5 +101,27 @@ func (s *Store) Get(ctx context.Context, key string) (string, error) {
 		s.cache.Add(key, value)
 	}
 
-	return value, nil
+	return value.URL, nil
+}
+
+func (s *Store) ClearExpired(ctx context.Context) error {
+	rows, err := s.db.Query(ctx, `
+		DELETE FROM urls
+		WHERE expires_at <= NOW()
+		RETURNING id
+	`)
+	if err != nil {
+		return err
+	}
+
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return err
+	}
+
+	for _, id := range ids {
+		s.cache.Remove(id)
+	}
+
+	return nil
 }

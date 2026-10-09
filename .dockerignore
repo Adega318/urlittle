@@ -3,14 +3,15 @@
 .git
 .github
 .env*
+.gitignore
 shell.nix
 *.md
 
 # Docker
-Dockerfile
+.dockerignore
 docker-compose.yml
 docker-compose_local.yml
-.dockerignore
+Dockerfile
 
 # Code
 migrate

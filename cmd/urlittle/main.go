@@ -28,6 +28,8 @@ func main() {
 	}
 	defer st.Close()
 
+	go runPeriodic(ctx, time.Minute, st.ClearExpired)
+
 	h := handlers.NewHandler(st)
 
 	mux := http.NewServeMux()
@@ -63,5 +65,21 @@ func main() {
 	defer cancel()
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Printf("shutdown error: %v", err)
+	}
+}
+
+func runPeriodic(ctx context.Context, interval time.Duration, fn func(context.Context) error) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if err := fn(ctx); err != nil {
+				log.Printf("periodic task failed: %v", err)
+			}
+		}
 	}
 }
