@@ -1,31 +1,39 @@
 # syntax=docker/dockerfile:1
 
-# Build stage
-FROM golang:1.27.1 AS builder
+# ---- Build stage ----
+FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.27.1-alpine AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
+ARG VERSION=dev
 
 WORKDIR /src
 
-COPY go.mod go.sum ./
-RUN --mount=type=cache,target=/go/pkg/mod \
+RUN --mount=type=bind,source=go.mod,target=go.mod \
+  --mount=type=bind,source=go.sum,target=go.sum \
+  --mount=type=cache,target=/go/pkg/mod \
   go mod download
 
 COPY . .
 
 RUN --mount=type=cache,target=/go/pkg/mod \
   --mount=type=cache,target=/root/.cache/go-build \
-  CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/app ./cmd/urlittle
+  CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+  go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" \
+  -o /out/app ./cmd/urlittle
 
-FROM alpine:3.24
+# ---- Runtime stage ----
+FROM docker.io/library/alpine:3.24
 
-RUN addgroup -S -g 65532 app \
-  && adduser -S -D -H -u 65532 -G app app \
-  && apk add --no-cache wget
+RUN apk add --no-cache ca-certificates tzdata \
+  && addgroup -S -g 65532 app \
+  && adduser -S -H -u 65532 -G app app
 
 COPY --from=builder /out/app /usr/local/bin/app
 
 ENV PORT=8080
 EXPOSE 8080
 
-USER app
+USER 65532:65532
 
 ENTRYPOINT ["/usr/local/bin/app"]
