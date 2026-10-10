@@ -8,13 +8,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Adega318/urlittle/internal"
+	"github.com/Adega318/urlittle/internal/config"
 	"github.com/Adega318/urlittle/internal/handlers"
 	"github.com/Adega318/urlittle/internal/store"
 )
 
 func main() {
-	config, err := internal.LoadConfig()
+	config, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}

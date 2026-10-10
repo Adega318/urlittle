@@ -1,0 +1,8 @@
+CREATE TABLE urls(
+  tid BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  id TEXT NOT NULL UNIQUE,
+  url TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX idx_urls_expires_at
+ON urls(expires_at);
