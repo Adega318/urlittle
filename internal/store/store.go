@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Adega318/urlittle/internal/config"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -15,8 +16,9 @@ import (
 var ErrNotFound = errors.New("not found")
 
 type Store struct {
-	cache *lru.Cache[string, Entry]
-	db    *pgxpool.Pool
+	config config.StoreConfig
+	cache  *lru.Cache[string, Entry]
+	db     *pgxpool.Pool
 }
 
 type Entry struct {
@@ -27,24 +29,24 @@ type Entry struct {
 const (
 	URLIDSize     = 6
 	maxIDAttempts = 3
-	ttl           = time.Minute * 10
 	uniqueCode    = "23505"
 )
 
-func NewStore(ctx context.Context, connString string, cacheSize int) (*Store, error) {
-	cache, err := lru.New[string, Entry](cacheSize)
+func NewStore(ctx context.Context, conf config.StoreConfig) (*Store, error) {
+	cache, err := lru.New[string, Entry](conf.CacheSize)
 	if err != nil {
 		return nil, err
 	}
 
-	db, err := newDb(ctx, connString)
+	db, err := newDb(ctx, conf.DbUrl)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Store{
-		cache: cache,
-		db:    db,
+		config: conf,
+		cache:  cache,
+		db:     db,
 	}, nil
 }
 
@@ -53,7 +55,7 @@ func (s *Store) Close() {
 }
 
 func (s *Store) Add(ctx context.Context, value string) (string, error) {
-	explires := time.Now().Add(ttl)
+	expires := time.Now().Add(s.config.Ttl)
 
 	for attempt := 0; attempt < maxIDAttempts; attempt++ {
 		id := rand.Text()[:URLIDSize]
@@ -63,7 +65,7 @@ func (s *Store) Add(ctx context.Context, value string) (string, error) {
 			"INSERT INTO urls (id, url, expires_at) VALUES ($1, $2, $3)",
 			id,
 			value,
-			explires,
+			expires,
 		)
 		if err != nil {
 			var pgErr *pgconn.PgError
@@ -73,7 +75,7 @@ func (s *Store) Add(ctx context.Context, value string) (string, error) {
 			return "", err
 		}
 
-		s.cache.Add(id, Entry{value, explires})
+		s.cache.Add(id, Entry{value, expires})
 
 		return id, nil
 	}

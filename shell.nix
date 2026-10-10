@@ -13,6 +13,7 @@ pkgs.mkShell {
   shellHook = ''
     export LOG_LEVEL=INFO
     export PORT=8080
+    export TTL_MINUTES=5
     export DATABASE_URL="postgres://urlittle:urlittle@localhost:5432/urlittle"
     export CACHE_SIZE=1000
     export POSTGRES_DB=urlittle

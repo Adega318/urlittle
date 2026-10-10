@@ -72,6 +72,7 @@ All configuration is via environment variables:
 | -------------- | -------- | ------------------------------------------- |
 | `LOG_LEVEL`    | Yes      | Log level: `DEBUG`, `INFO`, `WARN`, `ERROR` |
 | `PORT`         | Yes      | HTTP server port (e.g., `8080`)             |
+| `TTL_MINUTES`  | Yes      | Time to live in minutes                     |
 | `DATABASE_URL` | Yes      | PostgreSQL connection string                |
 | `CACHE_SIZE`   | Yes      | LRU cache capacity (number of entries)      |
 
@@ -112,6 +113,7 @@ The service will be available at `http://localhost:8080`.
 # Set environment variables
 export LOG_LEVEL=INFO
 export PORT=8080
+export TTL_MINUTES=5
 export DATABASE_URL=postgres://user:pass@localhost:5432/urlittle
 export CACHE_SIZE=1000
 
@@ -151,15 +153,16 @@ golangci-lint run
 
 ### Environment variables for docker-compose
 
-| Variable            | Description                       |
-| ------------------- | --------------------------------- |
-| `POSTGRES_DB`       | Database name                     |
-| `POSTGRES_USER`     | Database user                     |
-| `POSTGRES_PASSWORD` | Database password                 |
-| `LOG_LEVEL`         | Log level (default: INFO)         |
-| `PORT`              | Host port mapping (default: 8080) |
-| `CACHE_SIZE`        | LRU cache size (default: 1000)    |
-| `VERSION`           | Build version tag (default: dev)  |
+| Variable            | Description                          |
+| ------------------- | ------------------------------------ |
+| `POSTGRES_DB`       | Database name                        |
+| `POSTGRES_USER`     | Database user                        |
+| `POSTGRES_PASSWORD` | Database password                    |
+| `LOG_LEVEL`         | Log level (default: INFO)            |
+| `PORT`              | Host port mapping (default: 8080)    |
+| `TTL_MINUTES`       | Time to live in minutes (default: 5) |
+| `CACHE_SIZE`        | LRU cache size (default: 1000)       |
+| `VERSION`           | Build version tag (default: dev)     |
 
 ## Security
 
@@ -172,7 +175,7 @@ golangci-lint run
 ## Roadmap
 
 - [ ] **Rate limiting**: the API is currently unauthenticated and unthrottled, so a public deployment could be abused.
-- [ ] Configurable TTL (currently hardcoded to 10 minutes)
+- [x] Configurable TTL (currently hardcoded to 10 minutes)
 - [ ] Metrics endpoint (Prometheus)
 - [ ] Kubernetes configuration
 

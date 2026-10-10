@@ -43,6 +43,7 @@
           shellHook = ''
             export LOG_LEVEL=INFO
             export PORT=8080
+            export TTL_MINUTES=5
             export DATABASE_URL="postgres://urlittle:urlittle@localhost:5432/urlittle"
             export CACHE_SIZE=1000
             export POSTGRES_DB=urlittle
@@ -65,6 +66,11 @@
                   type = lib.types.portNumber;
                   default = 8080;
                   description = "Port to listen on";
+                };
+                ttl = lib.mkOption {
+                  type = lib.types.int;
+                  default = 5;
+                  description = "Time to live of uploaded urls in minutes";
                 };
                 databaseUrl = lib.mkOption {
                   type = lib.types.str;
@@ -102,6 +108,7 @@
                   Restart = "on-failure";
                   Environment = [
                     "PORT=${toString config.services.urlittle.port}"
+                    "TTL_MINUTES=${toString config.services.urlittle.ttl}"
                     "DATABASE_URL=${config.services.urlittle.databaseUrl}"
                     "CACHE_SIZE=${toString config.services.urlittle.cacheSize}"
                     "LOG_LEVEL=${config.services.urlittle.logLevel}"

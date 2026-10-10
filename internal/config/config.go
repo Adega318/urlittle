@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"time"
 )
 
 type Config struct {
@@ -14,6 +15,7 @@ type Config struct {
 }
 
 type StoreConfig struct {
+	Ttl       time.Duration
 	DbUrl     string
 	CacheSize int
 }
@@ -46,6 +48,15 @@ func LoadConfig() (Config, error) {
 }
 
 func loadStoreConfig() (StoreConfig, error) {
+	ttlRaw := os.Getenv("TTL_MINUTES")
+	if ttlRaw == "" {
+		return StoreConfig{}, errors.New("no value found for TTL_MINUTES environment variable")
+	}
+	ttl, err := strconv.Atoi(ttlRaw)
+	if err != nil {
+		return StoreConfig{}, errors.New("TTL_MINUTES must be an integer")
+	}
+
 	dburl := os.Getenv("DATABASE_URL")
 	if dburl == "" {
 		return StoreConfig{}, errors.New("no value found for DATABASE_URL environment variable")
@@ -55,11 +66,10 @@ func loadStoreConfig() (StoreConfig, error) {
 	if cacheSizeRaw == "" {
 		return StoreConfig{}, errors.New("no value found for CACHE_SIZE environment variable")
 	}
-
 	cacheSize, err := strconv.Atoi(cacheSizeRaw)
 	if err != nil {
 		return StoreConfig{}, errors.New("CACHE_SIZE must be an integer")
 	}
 
-	return StoreConfig{DbUrl: dburl, CacheSize: cacheSize}, nil
+	return StoreConfig{Ttl: time.Duration(ttl) * time.Minute, DbUrl: dburl, CacheSize: cacheSize}, nil
 }
