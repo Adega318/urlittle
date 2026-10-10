@@ -14,7 +14,7 @@ type Config struct {
 }
 
 type StoreConfig struct {
-	DBURL     string
+	DbUrl     string
 	CacheSize int
 }
 
@@ -61,5 +61,5 @@ func loadStoreConfig() (StoreConfig, error) {
 		return StoreConfig{}, errors.New("CACHE_SIZE must be an integer")
 	}
 
-	return StoreConfig{DBURL: dburl, CacheSize: cacheSize}, nil
+	return StoreConfig{DbUrl: dburl, CacheSize: cacheSize}, nil
 }

@@ -29,7 +29,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	st, err := store.NewStore(ctx, config.Store.DBURL, config.Store.CacheSize)
+	st, err := store.NewStore(ctx, config.Store.DbUrl, config.Store.CacheSize)
 	if err != nil {
 		slog.Error("store connection error", "err", err)
 		os.Exit(1)
