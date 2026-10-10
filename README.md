@@ -1,6 +1,6 @@
 # URLittle
 
-![CI](https://github.com/Adega318/urlittle/actions/workflows/go.yml/badge.svg)
+![CI](https://github.com/Adega318/urlittle/actions/workflows/ci.yml/badge.svg)
 
 A minimal URL shortener service written in Go.
 
