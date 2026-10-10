@@ -5,6 +5,7 @@ go 1.27.1
 require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/jackc/pgx/v5 v5.11.0
+	github.com/lmittmann/tint v1.2.1
 )
 
 require (

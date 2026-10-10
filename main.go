@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -11,6 +13,7 @@ import (
 	"github.com/Adega318/urlittle/internal/config"
 	"github.com/Adega318/urlittle/internal/handlers"
 	"github.com/Adega318/urlittle/internal/store"
+	"github.com/lmittmann/tint"
 )
 
 func main() {
@@ -19,12 +22,15 @@ func main() {
 		log.Fatal(err)
 	}
 
+	logger := slog.New(tint.NewTextHandler(os.Stdout, &tint.Options{Level: slog.LevelInfo}))
+	slog.SetDefault(logger)
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	st, err := store.NewStore(ctx, config.Store.DBURL, config.Store.CacheSize)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("store connection error", "err", err)
 	}
 	defer st.Close()
 
@@ -48,23 +54,20 @@ func main() {
 
 	errCh := make(chan error, 1)
 	go func() {
+		slog.Info("server started", "port", config.Port)
 		errCh <- srv.ListenAndServe()
 	}()
 
-	log.Printf("server listening on :%s", config.Port)
-
 	select {
 	case err := <-errCh:
-		log.Fatal(err)
+		slog.Error("server error", "err", err)
 	case <-ctx.Done():
 	}
-
-	log.Printf("server stopping...")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Printf("shutdown error: %v", err)
+		slog.Error("failed to shutdown", "err", err)
 	}
 }
 
@@ -78,7 +81,7 @@ func runPeriodic(ctx context.Context, interval time.Duration, fn func(context.Co
 			return
 		case <-ticker.C:
 			if err := fn(ctx); err != nil {
-				log.Printf("periodic task failed: %v", err)
+				slog.Error("periodic task failed", "err", err)
 			}
 		}
 	}
