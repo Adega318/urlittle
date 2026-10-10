@@ -1,2 +1,5 @@
 .direnv
 .env
+vendor/
+result
+result-*
