@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/Adega318/urlittle/internal/normalize"
@@ -10,8 +11,9 @@ import (
 )
 
 const maxBodySize = 8 << 10
+const baseUrl = "http://localhost"
 
-func (h *Handler) Store(w http.ResponseWriter, r *http.Request) {
+func (s *server) store(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
 
 	body, err := io.ReadAll(r.Body)
@@ -31,31 +33,35 @@ func (h *Handler) Store(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.st.Add(r.Context(), value)
+	id, err := s.st.Add(r.Context(), value)
 	if err != nil {
+		slog.ErrorContext(r.Context(), "failed to store URL", "err", err)
 		http.Error(w, "failed to store url", http.StatusInternalServerError)
 		return
 	}
 
-	url := "http://" + r.Host + "/" + id
+	url := baseUrl + s.addr + "/" + id
 
-	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Location", url)
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
-	_, _ = w.Write([]byte(url))
+	_, _ = io.WriteString(w, url)
 }
 
-func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
+func (s *server) redirect(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	val, err := h.st.Get(r.Context(), id)
+	val, err := s.st.Get(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			http.NotFound(w, r)
 			return
 		}
+		slog.ErrorContext(r.Context(), "failed to look up URL",
+			"id", id, "err", err)
 		http.Error(w, "failed to look up url", http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, val, http.StatusMovedPermanently)
+	http.Redirect(w, r, val, http.StatusTemporaryRedirect)
 }

@@ -1,11 +1,23 @@
 package handlers
 
-import "github.com/Adega318/urlittle/internal/store"
+import (
+	"net/http"
 
-type Handler struct {
-	st *store.Store
+	"github.com/Adega318/urlittle/internal/store"
+)
+
+type server struct {
+	addr string
+	st   *store.Store
 }
 
-func NewHandler(st *store.Store) *Handler {
-	return &Handler{st: st}
+func NewHandler(addr string, st *store.Store) *http.ServeMux {
+	s := server{addr, st}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /{$}", s.store)
+	mux.HandleFunc("GET /{id}", s.redirect)
+	mux.HandleFunc("GET /health", health)
+
+	return mux
 }

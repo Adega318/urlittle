@@ -38,16 +38,10 @@ func main() {
 
 	go runPeriodic(ctx, time.Minute, st.ClearExpired)
 
-	h := handlers.NewHandler(st)
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST /{$}", h.Store)
-	mux.HandleFunc("GET /{id}", h.Redirect)
-	mux.HandleFunc("GET /health", h.Health)
-
+	var addr = ":" + config.Port
 	srv := &http.Server{
-		Addr:              ":" + config.Port,
-		Handler:           mux,
+		Addr:              addr,
+		Handler:           handlers.NewHandler(addr, st),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
