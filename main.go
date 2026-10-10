@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"log/slog"
 	"net/http"
@@ -31,6 +32,7 @@ func main() {
 	st, err := store.NewStore(ctx, config.Store.DBURL, config.Store.CacheSize)
 	if err != nil {
 		slog.Error("store connection error", "err", err)
+		os.Exit(1)
 	}
 	defer st.Close()
 
@@ -60,14 +62,27 @@ func main() {
 
 	select {
 	case err := <-errCh:
-		slog.Error("server error", "err", err)
+		if !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("server error", "err", err)
+		}
+		return
 	case <-ctx.Done():
+		slog.Info("shutting down server", "reason", ctx.Err())
 	}
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		slog.Error("failed to shutdown", "err", err)
+		slog.Error("failed to gracefully shut down server", "err", err)
+
+		if err := srv.Close(); err != nil {
+			slog.Error("failed to close server", "err", err)
+		}
+	}
+
+	if err := <-errCh; err != nil && !errors.Is(err, http.ErrServerClosed) {
+		slog.Error("server error", "err", err)
 	}
 }
 
