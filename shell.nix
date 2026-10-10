@@ -8,26 +8,6 @@ pkgs.mkShell {
     gotools
     gcc
     (pkgs.writeShellScriptBin "gor" "exec go run ./cmd/urlittle")
-    (writeShellScriptBin "up" ''
-      case "$1" in
-        dev)
-          docker compose \
-            -f docker-compose.yml \
-            -f docker-compose_local.yml \
-            up -d postgres
-          ;;
-        "")
-          docker compose up -d
-          ;;
-        *)
-          echo "Usage: up {dev|<empty>}"
-          exit 1
-          ;;
-      esac
-    '')
-    (writeShellScriptBin "down" ''
-      docker compose down
-    '')
   ];
 
   shellHook = ''
