@@ -11,7 +11,7 @@ type server struct {
 	st   *store.Store
 }
 
-func NewHandler(addr string, st *store.Store) *http.ServeMux {
+func NewHandler(addr string, st *store.Store) http.Handler {
 	s := server{addr, st}
 
 	mux := http.NewServeMux()

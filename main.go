@@ -13,6 +13,7 @@ import (
 
 	"github.com/Adega318/urlittle/internal/config"
 	"github.com/Adega318/urlittle/internal/handlers"
+	"github.com/Adega318/urlittle/internal/middleware"
 	"github.com/Adega318/urlittle/internal/store"
 	"github.com/lmittmann/tint"
 )
@@ -39,9 +40,15 @@ func main() {
 	go runPeriodic(ctx, time.Minute, st.ClearExpired)
 
 	var addr = ":" + config.Port
+	limiter, err := middleware.NewClientLimiter(config.RateLimiting)
+	if err != nil {
+		slog.Error("handler middleware initialitation error", "err", err)
+		os.Exit(1)
+	}
+
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           handlers.NewHandler(addr, st),
+		Handler:           limiter.Middleware(handlers.NewHandler(addr, st)),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,

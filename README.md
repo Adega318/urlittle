@@ -68,13 +68,16 @@ HTTP/1.1 204 No Content
 
 All configuration is via environment variables:
 
-| Variable       | Required | Description                                 |
-| -------------- | -------- | ------------------------------------------- |
-| `LOG_LEVEL`    | Yes      | Log level: `DEBUG`, `INFO`, `WARN`, `ERROR` |
-| `PORT`         | Yes      | HTTP server port (e.g., `8080`)             |
-| `TTL_MINUTES`  | Yes      | Time to live in minutes                     |
-| `DATABASE_URL` | Yes      | PostgreSQL connection string                |
-| `CACHE_SIZE`   | Yes      | LRU cache capacity (number of entries)      |
+| Variable                    | Required | Description                                 |
+| --------------------------- | -------- | ------------------------------------------- |
+| `LOG_LEVEL`                 | Yes      | Log level: `DEBUG`, `INFO`, `WARN`, `ERROR` |
+| `PORT`                      | Yes      | HTTP server port (e.g., `8080`)             |
+| `TTL_MINUTES`               | Yes      | Time to live in minutes                     |
+| `DATABASE_URL`              | Yes      | PostgreSQL connection string                |
+| `CACHE_SIZE`                | Yes      | LRU cache capacity (number of entries)      |
+| `RATE_LIMIT_USER_LIST_SIZE` | Yes      | Max number of client IPs to track           |
+| `RATE_LIMIT_LIMIT`          | Yes      | Requests per second per client              |
+| `RATE_LIMIT_BURST`          | Yes      | Burst allowance per client                  |
 
 Example `.env`:
 
@@ -83,6 +86,9 @@ LOG_LEVEL=INFO
 PORT=8080
 DATABASE_URL=postgres://user:pass@localhost:5432/urlittle
 CACHE_SIZE=1000
+RATE_LIMIT_USER_LIST_SIZE=10000
+RATE_LIMIT_LIMIT=10
+RATE_LIMIT_BURST=20
 ```
 
 ## Running locally
@@ -153,16 +159,19 @@ golangci-lint run
 
 ### Environment variables for docker-compose
 
-| Variable            | Description                          |
-| ------------------- | ------------------------------------ |
-| `POSTGRES_DB`       | Database name                        |
-| `POSTGRES_USER`     | Database user                        |
-| `POSTGRES_PASSWORD` | Database password                    |
-| `LOG_LEVEL`         | Log level (default: INFO)            |
-| `PORT`              | Host port mapping (default: 8080)    |
-| `TTL_MINUTES`       | Time to live in minutes (default: 5) |
-| `CACHE_SIZE`        | LRU cache size (default: 1000)       |
-| `VERSION`           | Build version tag (default: dev)     |
+| Variable                    | Description                           |
+| --------------------------- | ------------------------------------- |
+| `POSTGRES_DB`               | Database name                         |
+| `POSTGRES_USER`             | Database user                         |
+| `POSTGRES_PASSWORD`         | Database password                     |
+| `LOG_LEVEL`                 | Log level (default: INFO)             |
+| `PORT`                      | Host port mapping (default: 8080)     |
+| `TTL_MINUTES`               | Time to live in minutes (default: 5)  |
+| `CACHE_SIZE`                | LRU cache size (default: 1000)        |
+| `RATE_LIMIT_USER_LIST_SIZE` | Max tracked IPs (default: 10000)      |
+| `RATE_LIMIT_LIMIT`          | Requests/sec per client (default: 10) |
+| `RATE_LIMIT_BURST`          | Burst allowance (default: 20)         |
+| `VERSION`                   | Build version tag (default: dev)      |
 
 ## Security
 
@@ -174,7 +183,7 @@ golangci-lint run
 
 ## Roadmap
 
-- [ ] **Rate limiting**: the API is currently unauthenticated and unthrottled, so a public deployment could be abused.
+- [x] **Rate limiting**: the API is currently unauthenticated and unthrottled, so a public deployment could be abused.
 - [x] Configurable TTL (currently hardcoded to 10 minutes)
 - [ ] Metrics endpoint (Prometheus)
 - [ ] Kubernetes configuration

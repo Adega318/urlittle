@@ -41,11 +41,18 @@
           ];
 
           shellHook = ''
+            # App 
             export LOG_LEVEL=INFO
             export PORT=8080
+            # Store
             export TTL_MINUTES=5
             export DATABASE_URL="postgres://urlittle:urlittle@localhost:5432/urlittle"
             export CACHE_SIZE=1000
+            # Rate Limiting
+            export RATE_LIMIT_USER_LIST_SIZE=5000
+            export RATE_LIMIT_LIMIT=10 
+            export RATE_LIMIT_BURST=20
+            # DB 
             export POSTGRES_DB=urlittle
             export POSTGRES_USER=urlittle
             export POSTGRES_PASSWORD=urlittle
@@ -92,6 +99,29 @@
                   default = "INFO";
                   description = "Log level";
                 };
+                rateLimiting = lib.mkOption {
+                  type = lib.types.submodule {
+                    options = {
+                      userListSize = lib.mkOption {
+                        type = lib.types.int;
+                        default = 10000;
+                        description = "Max number of client IPs to track for rate limiting";
+                      };
+                      limit = lib.mkOption {
+                        type = lib.types.int;
+                        default = 10;
+                        description = "Requests per second per client";
+                      };
+                      burst = lib.mkOption {
+                        type = lib.types.int;
+                        default = 20;
+                        description = "Burst allowance per client";
+                      };
+                    };
+                  };
+                  default = { };
+                  description = "Rate limiting configuration";
+                };
               };
             };
 
@@ -112,6 +142,9 @@
                     "DATABASE_URL=${config.services.urlittle.databaseUrl}"
                     "CACHE_SIZE=${toString config.services.urlittle.cacheSize}"
                     "LOG_LEVEL=${config.services.urlittle.logLevel}"
+                    "RATE_LIMIT_USER_LIST_SIZE=${toString config.services.urlittle.rateLimiting.userListSize}"
+                    "RATE_LIMIT_LIMIT=${toString config.services.urlittle.rateLimiting.limit}"
+                    "RATE_LIMIT_BURST=${toString config.services.urlittle.rateLimiting.burst}"
                   ];
                 };
               };
