@@ -8,6 +8,7 @@ pkgs.mkShell {
     gotools
     gcc
     (pkgs.writeShellScriptBin "gor" "exec go run .")
+    (pkgs.writeShellScriptBin "pod" "exec podman-compose \"$@\"")
   ];
 
   shellHook = ''
