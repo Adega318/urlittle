@@ -99,6 +99,7 @@ func runPeriodic(ctx context.Context, interval time.Duration, fn func(context.Co
 			if err := fn(ctx); err != nil {
 				slog.Error("periodic task failed", "err", err)
 			}
+			slog.Debug("periodic task executed")
 		}
 	}
 }
